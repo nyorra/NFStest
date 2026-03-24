@@ -1,13 +1,13 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
+using UnityEngine.InputSystem; // Важно для новой системы ввода
 
 public class CarController : MonoBehaviour
 {
     [Header("Колеса (Физика)")]
     public WheelCollider fl;
-    public WheelCollider fr; // front
+    public WheelCollider fr; 
     public WheelCollider rl;
-    public WheelCollider rr; // rear - зад
+    public WheelCollider rr; 
 
     [Header("Колеса (Визуал)")]
     public Transform flMesh;
@@ -16,38 +16,64 @@ public class CarController : MonoBehaviour
     public Transform rrMesh;
 
     [Header("Настройки")]
-    public float motorForce = 2000f; // engine
-    public float breakForce = 3000f; // brake
-    public float maxSteer = 30f; // angle
+    public float motorForce = 2000f; 
+    public float breakForce = 3000f; 
+    public float maxSteer = 30f; 
 
-    private void FixedUpdate(){
+    // Поля для новой системы ввода
+    private Controls controls; 
+    private Vector2 moveInput; 
+    private bool isBraking;
 
-        // 1. Read the input W/S and A/D or ARROWs
-        float v = Input.GetAxis("Vertical"); // forward 1, backward -1
-        float h = Input.GetAxis("Horizontal"); // right 1, left -1;
+    private void Awake()
+    {
+        // Инициализируем конфиг, который ты создал в Unity
+        controls = new Controls(); 
+    }
 
-        // 2. Force to the rear wheel
+    // Включаем и выключаем ввод (обязательно для корректной работы)
+    private void OnEnable() => controls.Enable();
+    private void OnDisable() => controls.Disable();
+
+    private void Update()
+    {
+        // Читаем ввод каждый кадр
+        moveInput = controls.Player.Move.ReadValue<Vector2>();
+        isBraking = controls.Player.Handbrake.IsPressed();
+    }
+
+    private void FixedUpdate()
+    {
+        // Используем данные, полученные в Update()
+        // y — это W/S (Vertical), x — это A/D (Horizontal)
+        float v = moveInput.y; 
+        float h = moveInput.x;
+
+        // 1. Тяга на задние колеса
         rl.motorTorque = v * motorForce;
         rr.motorTorque = v * motorForce;
 
-        // 3. Turn forward wheels
+        // 2. Поворот передних колес
         fl.steerAngle = h * maxSteer;
         fr.steerAngle = h * maxSteer;
 
-        if (Input.GetKey(KeyCode.Space)) {
+        // 3. Логика торможения (через ручник/пробел)
+        if (isBraking) {
             ApplyBrakes(breakForce);
         } 
         else { 
             ApplyBrakes(0);
         }
 
+        // 4. Обновление визуальных мешей колес
         UpdateWheel(fl, flMesh);
         UpdateWheel(fr, frMesh);
         UpdateWheel(rl, rlMesh);
         UpdateWheel(rr, rrMesh);
     }
 
-    void UpdateWheel(WheelCollider col, Transform mesh){
+    void UpdateWheel(WheelCollider col, Transform mesh)
+    {
         if (mesh == null) return;
         Vector3 pos;
         Quaternion rot;
@@ -56,9 +82,11 @@ public class CarController : MonoBehaviour
         mesh.rotation = rot;   
     }
 
-    void ApplyBrakes(float  force)
+    void ApplyBrakes(float force)
     {
-        fl.brakeTorque = force; fr.brakeTorque = force;
-        rl.brakeTorque = force; rr.brakeTorque = force;
+        fl.brakeTorque = force; 
+        fr.brakeTorque = force;
+        rl.brakeTorque = force; 
+        rr.brakeTorque = force;
     }
 }
