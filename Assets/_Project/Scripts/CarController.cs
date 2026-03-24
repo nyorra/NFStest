@@ -1,92 +1,98 @@
 using UnityEngine;
-using UnityEngine.InputSystem; // Важно для новой системы ввода
+using UnityEngine.InputSystem;
 
 public class CarController : MonoBehaviour
 {
-    [Header("Колеса (Физика)")]
-    public WheelCollider fl;
-    public WheelCollider fr; 
-    public WheelCollider rl;
-    public WheelCollider rr; 
+    [Header("Data")]
+    public CarConfig config;
 
-    [Header("Колеса (Визуал)")]
-    public Transform flMesh;
-    public Transform frMesh;
-    public Transform rlMesh;
-    public Transform rrMesh;
+    [Header("Physics")]
+    public WheelCollider fl; public WheelCollider fr; 
+    public WheelCollider rl; public WheelCollider rr; 
 
-    [Header("Настройки")]
-    public float motorForce = 2000f; 
-    public float breakForce = 3000f; 
-    public float maxSteer = 30f; 
+    [Header("Visual")]
+    public Transform flMesh; public Transform frMesh;
+    public Transform rlMesh; public Transform rrMesh;
 
-    // Поля для новой системы ввода
+    private Rigidbody rb; 
     private Controls controls; 
     private Vector2 moveInput; 
     private bool isBraking;
 
+    public float CurrentSpeed => rb != null ? rb.linearVelocity.magnitude : 0f;
+
     private void Awake()
     {
-        // Инициализируем конфиг, который ты создал в Unity
         controls = new Controls(); 
+        rb = GetComponent<Rigidbody>();
+        if (rb == null) Debug.LogError("Rigidbody Missing!");    
     }
 
-    // Включаем и выключаем ввод (обязательно для корректной работы)
     private void OnEnable() => controls.Enable();
     private void OnDisable() => controls.Disable();
 
     private void Update()
     {
-        // Читаем ввод каждый кадр
         moveInput = controls.Player.Move.ReadValue<Vector2>();
         isBraking = controls.Player.Handbrake.IsPressed();
     }
 
     private void FixedUpdate()
     {
-        // Используем данные, полученные в Update()
-        // y — это W/S (Vertical), x — это A/D (Horizontal)
-        float v = moveInput.y; 
-        float h = moveInput.x;
-
-        // 1. Тяга на задние колеса
-        rl.motorTorque = v * motorForce;
-        rr.motorTorque = v * motorForce;
-
-        // 2. Поворот передних колес
-        fl.steerAngle = h * maxSteer;
-        fr.steerAngle = h * maxSteer;
-
-        // 3. Логика торможения (через ручник/пробел)
-        if (isBraking) {
-            ApplyBrakes(breakForce);
-        } 
-        else { 
-            ApplyBrakes(0);
-        }
-
-        // 4. Обновление визуальных мешей колес
-        UpdateWheel(fl, flMesh);
-        UpdateWheel(fr, frMesh);
-        UpdateWheel(rl, rlMesh);
-        UpdateWheel(rr, rrMesh);
+        ApplyEngine();
+        ApplySteering();
+        ApplyBrakesAndDrift();
+        ApplyDownforce();
+        UpdateAllWheels();
     }
 
-    void UpdateWheel(WheelCollider col, Transform mesh)
+    private void ApplyEngine()
+    {
+        rl.motorTorque = moveInput.y * config.motorForce;
+        rr.motorTorque = moveInput.y * config.motorForce;
+    }
+
+    private void ApplySteering()
+    {
+        fl.steerAngle = moveInput.x * config.maxSteer;
+        fr.steerAngle = moveInput.x * config.maxSteer;
+    }
+
+    private void ApplyBrakesAndDrift()
+    {
+        float currentBrake = isBraking ? config.breakForce : 0;
+        float currentStiffness = isBraking ? config.driftStiffness : config.normalStiffness;
+
+        fl.brakeTorque = fr.brakeTorque = rl.brakeTorque = rr.brakeTorque = currentBrake;
+
+        UpdateFriction(rl, currentStiffness);
+        UpdateFriction(rr, currentStiffness);
+    }
+
+    private void UpdateFriction(WheelCollider wheel, float stiffness)
+    {
+        WheelFrictionCurve sf = wheel.sidewaysFriction;
+        sf.stiffness = stiffness;
+        wheel.sidewaysFriction = sf;
+    }
+
+    private void ApplyDownforce()
+    {
+        rb.AddForce(-transform.up * 100f * CurrentSpeed);
+    }
+
+    private void UpdateAllWheels()
+    {
+        UpdateWheel(fl, flMesh); UpdateWheel(fr, frMesh);
+        UpdateWheel(rl, rlMesh); UpdateWheel(rr, rrMesh);
+    }
+
+    private void UpdateWheel(WheelCollider col, Transform mesh)
     {
         if (mesh == null) return;
-        Vector3 pos;
-        Quaternion rot;
+        Vector3 pos; Quaternion rot;
         col.GetWorldPose(out pos, out rot);
         mesh.position = pos;
         mesh.rotation = rot;   
-    }
-
-    void ApplyBrakes(float force)
-    {
-        fl.brakeTorque = force; 
-        fr.brakeTorque = force;
-        rl.brakeTorque = force; 
-        rr.brakeTorque = force;
     }
 }
