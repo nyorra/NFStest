@@ -54,8 +54,8 @@ public class CarController : MonoBehaviour
 
     private void ApplySteering()
     {
-        fl.steerAngle = moveInput.x * config.maxSteer;
-        fr.steerAngle = moveInput.x * config.maxSteer;
+        fl.steerAngle = moveInput.x * config.maxSteerAngle;
+        fr.steerAngle = moveInput.x * config.maxSteerAngle;
     }
 
     private void ApplyBrakesAndDrift()
