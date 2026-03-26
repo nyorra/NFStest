@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class CarController : MonoBehaviour
 {
@@ -25,7 +24,8 @@ public class CarController : MonoBehaviour
     {
         controls = new Controls(); 
         rb = GetComponent<Rigidbody>();
-        if (rb == null) Debug.LogError("Rigidbody Missing!");    
+        if (rb == null) Debug.LogError("Rigidbody Missing!");
+        rb.centerOfMass = new Vector3(0, -0.7f, 0);     
     }
 
     private void OnEnable() => controls.Enable();
