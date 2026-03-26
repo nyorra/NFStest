@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2ac364322df914d4bae281637d59c41a, type: 3}
+  m_Name: LancerEvo_Asset
+  m_EditorClassIdentifier: Assembly-CSharp::CarConfig
+  carName: Config_LacnerEvo
+  visualPrefab: {fileID: 4719464063593462535, guid: b5f916a7bb28a8341a6c25cfb9bcbc9d, type: 3}
+  topSpeedStat: 0
+  handlingStat: 0
+  motorForce: 3000
+  maxSpeed: 130
+  breakForce: 5000
+  wheelTrack: 1.5
+  wheelBase: 2.3
+  wheelHeight: 0.5
+  centerOffsetZ: 0
+  wheelRotationOffset: {x: 0, y: 0, z: -90}
+  wheelRadius: 0.325
+  maxSteerAngle: 45
+  steeringSensitivity: 0.7
+  driftStiffness: 0.5
+  normalStiffness: 1
